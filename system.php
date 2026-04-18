@@ -161,3 +161,26 @@ $quizDifficulty = $_SESSION['quiz_difficulty'] ?? '';
 $scoreHistory   = $_SESSION['score_history'] ?? [];
 $diffPicked     = !empty($quizDifficulty);
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHP Online Quiz System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg:      #eef2fb;
+        --surface: #ffffff;
+        --card:    #ffffff;
+        --border:  #adbad6;
+        --accent:  #1558c0;
+        --accent2: #3730a3;
+        --success: #166534;
+        --warning: #92400e;
+        --danger:  #991b1b;
+        --text:    #0a0f1e;
+        --muted:   #2d3a52;
+      }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
