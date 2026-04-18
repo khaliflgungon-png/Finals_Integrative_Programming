@@ -135,4 +135,29 @@ if ($action === 'retry' && !empty($_SESSION['logged_in'])) {
           $_SESSION['start_time'], $_SESSION['quiz_difficulty']);
     header('Location: '.$_SERVER['PHP_SELF']); exit;
 }
+
+// FEATURE 3: Accept partial submission (no minimum answer count required)
+if ($action === 'submit_quiz' && !empty($_SESSION['logged_in']) && empty($_SESSION['quiz_submitted'])) {
+    $questions      = $_SESSION['quiz_questions'] ?? [];
+    $userAnswers    = $_POST['answers'] ?? [];
+    $correctAnswers = array_column($questions, 'answer');
+    $quizResult                 = checkAnswers($userAnswers, $correctAnswers);
+    $quizResult['questions']    = $questions;
+    addScoreHistory($quizResult['percentage'], $quizResult['score'], $quizResult['total'], $_SESSION['quiz_difficulty'] ?? 'mixed');
+    $_SESSION['quiz_results']   = $quizResult;
+    $_SESSION['quiz_submitted'] = true;
+    header('Location: '.$_SERVER['PHP_SELF']); exit;
+}
+
+// State
+$isLoggedIn     = !empty($_SESSION['logged_in']);
+$isLocked       = !empty($_SESSION['locked']);
+$quizSubmitted  = !empty($_SESSION['quiz_submitted']);
+$quizResults    = $_SESSION['quiz_results'] ?? null;
+$questions      = $_SESSION['quiz_questions'] ?? [];
+$startTime      = $_SESSION['start_time'] ?? time();
+$attempts       = $_SESSION['login_attempts'] ?? 0;
+$quizDifficulty = $_SESSION['quiz_difficulty'] ?? '';
+$scoreHistory   = $_SESSION['score_history'] ?? [];
+$diffPicked     = !empty($quizDifficulty);
 ?>
