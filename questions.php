@@ -32,4 +32,36 @@ return [
             'explain'  => '$_POST collects form data sent with the HTTP POST method.',
         ],
     ],
+    'medium' => [
+        [
+            'question' => 'What does a "for" loop require to function properly?',
+            'choices'  => ['A' => 'Only a condition', 'B' => 'Initialization, condition, and increment', 'C' => 'Only a counter variable', 'D' => 'A break statement'],
+            'answer'   => 'B',
+            'explain'  => 'A for loop has three parts: initialization (e.g., $i=0), condition ($i<5), and increment ($i++).',
+        ],
+        [
+            'question' => 'Which PHP function is used to count the number of elements in an array?',
+            'choices'  => ['A' => 'length()', 'B' => 'sizeof()', 'C' => 'count()', 'D' => 'Both B and C'],
+            'answer'   => 'D',
+            'explain'  => 'Both count() and sizeof() return the number of elements in an array. sizeof() is an alias of count().',
+        ],
+        [
+            'question' => 'How do you start a PHP session?',
+            'choices'  => ['A' => 'start_session()', 'B' => 'session_start()', 'C' => '$_SESSION = true', 'D' => 'session_init()'],
+            'answer'   => 'B',
+            'explain'  => 'session_start() must be called before any output to initialize or resume a session.',
+        ],
+        [
+            'question' => 'Which of the following correctly defines a function in PHP?',
+            'choices'  => ['A' => 'def myFunc() {}', 'B' => 'function: myFunc() {}', 'C' => 'function myFunc() {}', 'D' => 'func myFunc() {}'],
+            'answer'   => 'C',
+            'explain'  => 'PHP uses the "function" keyword followed by the function name and parentheses.',
+        ],
+        [
+            'question' => 'What does $_GET do in PHP?',
+            'choices'  => ['A' => 'Collects data from POST forms', 'B' => 'Gets the server IP', 'C' => 'Collects data sent via the URL query string', 'D' => 'Retrieves session data'],
+            'answer'   => 'C',
+            'explain'  => '$_GET collects data appended to the URL (e.g., page.php?name=John).',
+        ],
+    ],
 ?>
