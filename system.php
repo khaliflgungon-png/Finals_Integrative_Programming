@@ -104,4 +104,35 @@ function addScoreHistory(float $pct, int $score, int $total, string $difficulty)
     ]);
     $_SESSION['score_history'] = array_slice($_SESSION['score_history'], 0, 10);
 }
+
+// HANDLE ACTIONS
+$action  = $_POST['action'] ?? $_GET['action'] ?? '';
+$message = ''; $msgType = '';
+
+if ($action === 'logout')     { session_destroy(); header('Location: '.$_SERVER['PHP_SELF']); exit; }
+if ($action === 'reset_lock') { unset($_SESSION['locked'], $_SESSION['login_attempts']); header('Location: '.$_SERVER['PHP_SELF']); exit; }
+
+if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $result = loginSystem(trim($_POST['username'] ?? ''), trim($_POST['password'] ?? ''));
+    if ($result['success']) { header('Location: '.$_SERVER['PHP_SELF']); exit; }
+    $message = $result['message']; $msgType = 'error';
+}
+
+// FEATURE 1: Start quiz with chosen difficulty
+if ($action === 'start_quiz' && !empty($_SESSION['logged_in'])) {
+    $diff = in_array($_POST['difficulty'] ?? '', ['easy','medium','hard','mixed']) ? $_POST['difficulty'] : 'mixed';
+    unset($_SESSION['quiz_questions'], $_SESSION['quiz_results'], $_SESSION['quiz_submitted'],
+          $_SESSION['start_time'], $_SESSION['quiz_difficulty']);
+    $_SESSION['quiz_difficulty'] = $diff;
+    $_SESSION['quiz_questions']  = prepareQuiz($allQuestions, $diff);
+    $_SESSION['start_time']      = time();
+    header('Location: '.$_SERVER['PHP_SELF']); exit;
+}
+
+// Retry = go back to difficulty picker
+if ($action === 'retry' && !empty($_SESSION['logged_in'])) {
+    unset($_SESSION['quiz_questions'], $_SESSION['quiz_results'], $_SESSION['quiz_submitted'],
+          $_SESSION['start_time'], $_SESSION['quiz_difficulty']);
+    header('Location: '.$_SERVER['PHP_SELF']); exit;
+}
 ?>
