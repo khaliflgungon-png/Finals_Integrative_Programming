@@ -363,3 +363,147 @@ $diffPicked     = !empty($quizDifficulty);
 </style>
 </head>
 <body>
+    
+<header class="site-header">
+  <?php if ($isLoggedIn && !empty($questions)): ?>
+  <div style="display:flex;gap:.75rem;align-items:center;">
+    <div class="user-pill">👤 Logged in as <span>student</span></div>
+    <a href="?action=logout" class="btn btn-secondary" style="padding:.4rem 1rem;font-size:.8rem;">Logout</a>
+  </div>
+  <?php endif; ?>
+</header>
+
+<?php if (!$isLoggedIn): ?>
+<!-- ══════════ LOGIN ══════════ -->
+<div class="login-container">
+  <div class="card login-card">
+    <div class="logo" style="margin-bottom:1.5rem;">&lt;<span>PHP</span>Quiz /&gt;</div>
+    <div style="margin-bottom:1.75rem;">
+      <div style="font-size:2.5rem;margin-bottom:.5rem;">🔐</div>
+      <h1>Online Quiz</h1>
+      <p>Access the PHP Quiz System. You have <?= MAX_ATTEMPTS ?> attempts.</p>
+    </div>
+
+    <?php if ($isLocked): ?>
+      <div class="lock-icon">🔒</div>
+      <div class="msg msg-error" style="justify-content:center;flex-direction:column;text-align:center;gap:.25rem;">
+        <strong>Account Locked</strong>
+        <small>Maximum login attempts reached. Contact your instructor.</small>
+      </div>
+      <div style="text-align:center;"><a href="?action=reset_lock" class="btn btn-secondary">🔄 Reset (for testing)</a></div>
+    <?php else: ?>
+      <?php if ($message): ?><div class="msg msg-<?= $msgType ?>"><?= htmlspecialchars($message) ?></div><?php endif; ?>
+      <form method="POST">
+        <input type="hidden" name="action" value="login">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="student" autocomplete="off" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <?php if ($attempts > 0): ?>
+        <div style="margin-bottom:1rem;">
+          <small style="color:var(--muted);">Attempts used:</small>
+          <div class="attempts-bar">
+            <?php for ($i = 0; $i < MAX_ATTEMPTS; $i++): ?>
+              <div class="attempt-dot <?= $i < $attempts ? '' : 'used' ?>"></div>
+            <?php endfor; ?>
+          </div>
+        </div>
+        <?php endif; ?>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Login →</button>
+      </form>
+      <p style="text-align:center;font-size:.8rem;margin-top:1.25rem;font-family:'Space Mono',monospace;">
+        Hint: <code style="color:var(--accent);">student</code> / <code style="color:var(--accent);">quiz123</code>
+      </p>
+    <?php endif; ?>
+  </div>
+</div>
+
+    <?php elseif (!$diffPicked): ?>
+<!-- FEATURE 1 & 2: DIFFICULTY PICKER + HISTORY -->
+<div class="card">
+  <div style="margin-bottom:1.75rem;">
+    <div style="font-size:2.2rem;margin-bottom:.5rem;">🎯</div>
+    <h1>Choose Difficulty</h1>
+    <p>Select a difficulty level. Each mode has up to 5 questions with shuffled answer positions.</p>
+  </div>
+
+  <form method="POST" id="diff-form">
+    <input type="hidden" name="action" value="start_quiz">
+    <div class="diff-grid">
+
+      <label class="diff-card" id="dc-easy" onclick="selectDiff('easy')">
+        <input type="radio" name="difficulty" value="easy" id="d-easy">
+        <div class="diff-icon">🟢</div>
+        <div class="diff-title" style="color:#166534;">Easy</div>
+        <div class="diff-desc">Basic PHP concepts — great for beginners.</div>
+      </label>
+
+      <label class="diff-card" id="dc-medium" onclick="selectDiff('medium')">
+        <input type="radio" name="difficulty" value="medium" id="d-medium">
+        <div class="diff-icon">🟡</div>
+        <div class="diff-title" style="color:#92400e;">Medium</div>
+        <div class="diff-desc">Loops, functions, and superglobals.</div>
+      </label>
+
+      <label class="diff-card" id="dc-hard" onclick="selectDiff('hard')">
+        <input type="radio" name="difficulty" value="hard" id="d-hard">
+        <div class="diff-icon">🔴</div>
+        <div class="diff-title" style="color:#991b1b;">Hard</div>
+        <div class="diff-desc">Advanced PHP — types, headers, security.</div>
+      </label>
+
+      <label class="diff-card sel-mixed" id="dc-mixed" onclick="selectDiff('mixed')">
+        <input type="radio" name="difficulty" value="mixed" id="d-mixed" checked>
+        <div class="diff-icon">⚫</div>
+        <div class="diff-title" style="color:#000000;">Mixed</div>
+        <div class="diff-desc">All difficulty levels shuffled together.</div>
+      </label>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%;font-size:1.05rem;padding:.9rem;">
+      Start Quiz →
+    </button>
+  </form>
+
+  <!-- FEATURE 2: Score History -->
+  <?php if (!empty($scoreHistory)): ?>
+  <hr>
+  <h2>📜 Score History</h2>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Score</th><th>%</th><th>Difficulty</th><th>Remark</th><th>When</th>
+      </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($scoreHistory as $hi => $h):
+      $hRemark = $h['pct'] >= 90 ? 'Excellent' : ($h['pct'] >= 70 ? 'Good' : 'Needs Improvement');
+      $hCls    = $h['pct'] >= 90 ? 'hist-excellent' : ($h['pct'] >= 70 ? 'hist-good' : 'hist-poor');
+    ?>
+      <tr>
+        <td style="color:var(--muted);font-weight:700;font-size:.82rem;"><?= $hi + 1 ?></td>
+        <td><strong><?= $h['score'] ?>/<?= $h['total'] ?></strong></td>
+        <td><span class="hist-pct <?= $hCls ?>"><?= $h['pct'] ?>%</span></td>
+        <td><span class="cat-badge cat-<?= htmlspecialchars($h['difficulty']) ?>"><?= ucfirst(htmlspecialchars($h['difficulty'])) ?></span></td>
+        <td style="font-weight:600;"><?= $hRemark ?></td>
+        <td style="color:var(--muted);font-size:.82rem;"><?= htmlspecialchars($h['time']) ?></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php endif; ?>
+</div>
+
+    <script>
+function selectDiff(d) {
+  ['easy','medium','hard','mixed'].forEach(function(v){
+    document.getElementById('dc-'+v).className = 'diff-card' + (v===d ? ' sel-'+v : '');
+  });
+  document.getElementById('d-'+d).checked = true;
+}
+</script>
