@@ -499,11 +499,90 @@ $diffPicked     = !empty($quizDifficulty);
   <?php endif; ?>
 </div>
 
-    <script>
-function selectDiff(d) {
-  ['easy','medium','hard','mixed'].forEach(function(v){
-    document.getElementById('dc-'+v).className = 'diff-card' + (v===d ? ' sel-'+v : '');
-  });
-  document.getElementById('d-'+d).checked = true;
-}
+<script>
+    function selectDiff(d) {
+      ['easy','medium','hard','mixed'].forEach(function(v){
+        document.getElementById('dc-'+v).className = 'diff-card' + (v===d ? ' sel-'+v : '');
+      });
+      document.getElementById('d-'+d).checked = true;
+    }
 </script>
+<?php elseif ($quizSubmitted && $quizResults): ?>
+<!-- RESULTS — FEATURE 8: Animated reveal -->
+<?php
+  $skippedCount = count(array_filter($quizResults['results'], fn($r) => $r['skipped']));
+  $wrongCount   = $quizResults['total'] - $quizResults['score'] - $skippedCount;
+  $ringOffset   = round(283 * (1 - $quizResults['percentage'] / 100), 2);
+?>
+<div class="card">
+  <div class="result-badge"><?= $quizResults['emoji'] ?></div>
+  <div class="result-remark"><?= htmlspecialchars($quizResults['remark']) ?>!</div>
+  <div class="result-sub">Here's how you did — <strong><?= ucfirst($quizDifficulty) ?></strong> difficulty</div>
+
+  <!-- Animated ring -->
+  <div class="ring-wrap">
+    <svg class="ring-svg" width="120" height="120" viewBox="0 0 110 110">
+      <circle class="ring-bg"   cx="55" cy="55" r="45"/>
+      <circle class="ring-fill" id="ring-el" cx="55" cy="55" r="45"
+              style="stroke-dashoffset:283"/>
+      <text class="ring-label" x="55" y="55"
+            transform="rotate(90 55 55)"><?= $quizResults['percentage'] ?>%</text>
+    </svg>
+  </div>
+
+  <!-- FEATURE 8: Score bounces in -->
+  <div class="result-score"><?= $quizResults['score'] ?>/<?= $quizResults['total'] ?></div>
+
+  <div class="result-meta">
+    <div class="result-pill">📊 <?= $quizResults['percentage'] ?>%</div>
+    <div class="result-pill">✅ <?= $quizResults['score'] ?> Correct</div>
+    <div class="result-pill">❌ <?= $wrongCount ?> Wrong</div>
+    <?php if ($skippedCount > 0): ?>
+    <div class="result-pill">⬜ <?= $skippedCount ?> Skipped</div>
+    <?php endif; ?>
+  </div>
+
+    <hr>
+  <h2>📋 Answer Review</h2>
+
+  <?php foreach ($quizResults['results'] as $i => $res):
+    $q       = $quizResults['questions'][$i];
+    $userAns = $res['given'] ?? null;
+    $skipped = $res['skipped'] ?? false;
+  ?>
+  <div class="q-card">
+    <div class="q-number">Question <?= $i + 1 ?></div>
+    <span class="cat-badge cat-<?= $q['category'] ?>"><?= ucfirst($q['category']) ?></span>
+    <?php if ($skipped): ?>
+      <!-- FEATURE 6: Mark unanswered as ? -->
+      <div><span class="skipped-tag">⬜ Not answered — shown as <strong>?</strong></span></div>
+    <?php endif; ?>
+    <div class="q-text"><?= htmlspecialchars($q['question']) ?></div>
+    <div class="choices">
+      <?php foreach ($q['choices'] as $key => $text):
+        $isCorrect = ($key === $res['expected']);
+        $isChosen  = ($key === $userAns);
+        if      ($isCorrect)               $cls = 'correct';
+        elseif  ($isChosen && !$isCorrect) $cls = 'wrong';
+        elseif  ($skipped)                 $cls = 'skipped';
+        else                               $cls = '';
+        // FEATURE 6: show ? for letter on skipped non-correct options
+        $letter = ($skipped && !$isCorrect) ? '?' : $key;
+      ?>
+      <div class="choice-label <?= $cls ?>">
+        <span class="choice-letter"><?= $letter ?></span>
+        <?= htmlspecialchars($text) ?>
+        <?php if ($isCorrect)               echo ' ✓'; ?>
+        <?php if ($isChosen && !$isCorrect) echo ' ✗'; ?>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <div class="explain-box">💡 <?= htmlspecialchars($q['explain']) ?></div>
+  </div>
+      <?php endforeach; ?>
+
+    <div class="actions">
+    <a href="?action=retry" class="btn btn-primary">🔄 Try Again</a>
+    <a href="?action=logout" class="btn btn-secondary">↩ Logout</a>
+  </div>
+</div>
