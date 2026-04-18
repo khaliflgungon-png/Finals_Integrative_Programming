@@ -586,3 +586,135 @@ $diffPicked     = !empty($quizDifficulty);
     <a href="?action=logout" class="btn btn-secondary">↩ Logout</a>
   </div>
 </div>
+
+<script>
+    // Animate ring after paint
+    requestAnimationFrame(function(){
+      setTimeout(function(){
+        var el = document.getElementById('ring-el');
+        if (el) el.style.strokeDashoffset = '<?= $ringOffset ?>';
+      }, 200);
+});
+</script>
+
+<?php else: ?>
+<!-- QUIZ SCREEN -->
+
+<!-- FEATURE 5: Fixed bar with both timer and progress -->
+<div class="fixed-bar">
+  <div class="fixed-bar-left">
+    <div class="bar-label">⏱ Time Remaining: <strong id="countdown">--:--</strong></div>
+    <div class="bar-track"><div class="bar-fill" id="timer-bar"></div></div>
+    <div class="bar-track"><div class="bar-fill" id="progress-bar"></div></div>
+    <div class="progress-label" id="progress-text">0 / <?= count($questions) ?> answered</div>
+  </div>
+  <div class="fixed-bar-right">
+    <div class="user-pill">
+      👤 <span>student</span>
+      <span class="cat-badge cat-<?= $quizDifficulty ?>" style="margin:0 0 0 .35rem;"><?= ucfirst($quizDifficulty) ?></span>
+    </div>
+    <a href="?action=logout" class="btn btn-secondary" style="padding:.4rem 1rem;font-size:.8rem;">Logout</a>
+  </div>
+</div>
+
+<div style="height:130px;"></div>
+
+<div class="card">
+  <div style="margin-bottom:1.75rem;">
+    <h1>PHP Knowledge Quiz</h1>
+    <p><?= count($questions) ?> questions · <strong><?= ucfirst($quizDifficulty) ?></strong> · Answer positions shuffled</p>
+  </div>
+
+  <?php if ($message): ?>
+    <div class="msg msg-<?= $msgType ?>"><?= htmlspecialchars($message) ?></div>
+  <?php endif; ?>
+
+  <form method="POST" id="quiz-form">
+    <input type="hidden" name="action" value="submit_quiz">
+
+    <?php foreach ($questions as $i => $q): ?>
+    <!-- FEATURE 4: All cards start with .unanswered (gray) -->
+    <div class="q-card unanswered" id="q<?= $i ?>">
+      <div class="q-number">Question <?= $i + 1 ?> of <?= count($questions) ?></div>
+      <span class="cat-badge cat-<?= $q['category'] ?>"><?= ucfirst($q['category']) ?></span>
+      <div class="q-text"><?= htmlspecialchars($q['question']) ?></div>
+      <div class="choices">
+        <?php foreach ($q['choices'] as $key => $text): ?>
+        <label class="choice-label" id="lbl-<?= $i ?>-<?= $key ?>">
+          <span class="choice-letter"><?= $key ?></span>
+          <input type="radio" name="answers[<?= $i ?>]" value="<?= $key ?>"
+                 onchange="markAnswered(<?= $i ?>)">
+          <?= htmlspecialchars($text) ?>
+        </label>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endforeach; ?>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+      <button type="submit" class="btn btn-primary">Submit Quiz →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+var totalQ   = <?= count($questions) ?>;
+var answered = new Set();
+
+// FEATURE 4 & 5: Mark answered, remove gray, update progress bar
+function markAnswered(idx) {
+  answered.add(idx);
+  var qCard = document.getElementById('q' + idx);
+  if (qCard) qCard.classList.remove('unanswered'); // FEATURE 4: remove gray
+  var pt = document.getElementById('progress-text');
+  var pb = document.getElementById('progress-bar');
+  if (pt) pt.textContent = answered.size + ' / ' + totalQ + ' answered';
+  if (pb) pb.style.width = (answered.size / totalQ * 100) + '%'; // FEATURE 5
+}
+
+// Highlight chosen radio label
+document.addEventListener('change', function(e){
+  if (e.target.type !== 'radio') return;
+  var all = document.querySelectorAll('[name="' + e.target.name + '"]');
+  all.forEach(function(r){
+    var lbl = r.closest('.choice-label');
+    if (!lbl) return;
+    lbl.style.borderColor = r.checked ? 'var(--accent)' : '';
+    lbl.style.background  = r.checked ? '#eef4ff'       : '';
+  });
+});
+
+// FEATURE 3: Timer — auto-submit form (with partial answers) on timeout
+(function(){
+  var startTime = <?= $startTime ?>;
+  var limit     = <?= QUIZ_TIME_LIMIT ?>;
+  var bar       = document.getElementById('timer-bar');
+  var cd        = document.getElementById('countdown');
+  if (!bar || !cd) return;
+
+  var done = false;
+  function tick(){
+    var elapsed   = Math.floor(Date.now() / 1000) - startTime;
+    var remaining = Math.max(0, limit - elapsed);
+    var pct       = remaining / limit * 100;
+    var m = Math.floor(remaining / 60);
+    var s = remaining % 60;
+    cd.textContent  = m + ':' + (s < 10 ? '0' : '') + s;
+    bar.style.width = pct + '%';
+    bar.style.background = pct < 30 ? '#991b1b' : pct < 60 ? '#92400e' : 'var(--accent)';
+
+    if (remaining === 0 && !done) {
+      done = true;
+      clearInterval(iv);
+      // FEATURE 3: submit even if not all questions answered
+      document.getElementById('quiz-form').submit();
+    }
+  }
+  tick();
+  var iv = setInterval(tick, 1000);
+})();
+</script>
+
+<?php endif; ?>
+</body>
+</html>
